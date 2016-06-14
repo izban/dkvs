@@ -1,3 +1,5 @@
+package Zban;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -9,6 +11,7 @@ import java.util.Scanner;
  */
 public class DKVSProperties {
     static public Map<Integer, Integer> ports = new HashMap<>();
+    static int timeout;
 
     static {
         try {
@@ -19,6 +22,9 @@ public class DKVSProperties {
                     int id = Integer.parseInt(s.substring(s.indexOf(".") + 1, s.indexOf("=")));
                     int port = Integer.parseInt(s.substring(s.indexOf("=") + 1));
                     ports.put(id, port);
+                }
+                if (s.startsWith("timeout")) {
+                    timeout = Integer.parseInt(s.substring(s.indexOf("=") + 1));
                 }
             }
         } catch (FileNotFoundException e) {
