@@ -20,7 +20,7 @@ public class EventRequestVote implements Event {
 
     @Override
     public void execute() {
-        node.lastLeaderHeartbeat.set(System.currentTimeMillis());
+        //node.lastLeaderHeartbeat.set(System.currentTimeMillis());
         node.q.offer(() -> {
             String a[] = s.split(" ");
             int cterm = Integer.parseInt(a[1]);

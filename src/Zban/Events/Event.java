@@ -35,6 +35,18 @@ public interface Event {
         if (s.startsWith(Constants.RES_APPEND_ENTRY)) {
             return new EventResAppendEntry(s, client, node);
         }
+        if (s.startsWith(Constants.MSG_LEADER)) {
+            return new EventMsgLeader(s, client, node);
+        }
+        if (s.startsWith(Constants.SET)) {
+            return new EventSet(s, client, node);
+        }
+        if (s.startsWith(Constants.DELETE)) {
+            return new EventDelete(s, client, node);
+        }
+        if (s.startsWith(Constants.LEADER_RESPONSE)) {
+            return new EventLeaderResponse(s, client, node);
+        }
         return null;
     }
 }

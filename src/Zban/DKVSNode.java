@@ -9,10 +9,10 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 import static Zban.DKVSProperties.n;
 import static Zban.NodeType.CANDIDATE;
@@ -40,6 +40,9 @@ public class DKVSNode {
     public int votes = 0;
     public int nextIndex[], matchIndex[];
     public int commitIndex = 0;
+    public int leaderId = -1;
+    public HashMap<Integer, Runnable> responses = new HashMap<>();
+    public HashMap<Integer, Integer> responseId = new HashMap<>();
 
     public DKVSNode(int id) {
         this.id = id;
@@ -72,6 +75,7 @@ public class DKVSNode {
         term = nterm;
         voteFor = -1;
         votes = 0;
+        leaderId = -1;
     }
 
     public void updateStateMachine() {
@@ -80,6 +84,9 @@ public class DKVSNode {
                 LogEntry b = logger.a.get(++lastApplied);
                 if (b.value.isEmpty()) map.remove(b.key);
                 else map.put(b.key, b.value);
+                if (responseId.containsKey(lastApplied)) {
+                    responses.get(responseId.get(lastApplied)).run();
+                }
             }
         }
     }
@@ -136,7 +143,7 @@ public class DKVSNode {
         }).start();
 
         DKVSProperties.ports.forEach((cid, cport) -> {
-            if (cid == id) return;
+            if (cid == id || cid > n) return;
             new Thread(() -> {
                 while (true) {
                     try {
@@ -243,6 +250,7 @@ public class DKVSNode {
     }
 
     public void updateCommmitIndex() {
+        if (type != LEADER) return;
         for (int i = logger.a.size() - 1; i > commitIndex; i--) {
             int cnt = 1;
             for (int j = 1; j <= n; j++) if (j != id) {

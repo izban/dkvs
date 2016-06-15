@@ -46,13 +46,14 @@ public class EventAppendEntry implements Event {
                 if (node.logger.a.size() > prevLogId && node.logger.a.get(prevLogId).term == prevLogTerm) {
 //                    int curEntryTerm = node.logger.a.size() > prevLogId + 1 ? node.logger.a.get(prevLogId + 1).term : -1;
 //                    if (curEntryTerm != entryTerm) {
-                    while (node.logger.a.size() > prevLogId + 1) {
-                        node.logger.a.remove(node.logger.a.size() - 1);
-                    }
+                    node.logger.trim(prevLogId + 1);
 //                    }
-                    if (node.commitIndex >= node.logger.a.size()) throw new AssertionError();
+                    if (node.commitIndex > node.logger.a.size()) {
+                        System.err.println(node.commitIndex + " " + node.logger.a.size());
+                        throw new AssertionError();
+                    }
                     if (!entry.equals("null")) {
-                        node.logger.a.add(LogEntry.parseEntry(entry));
+                        node.logger.add(LogEntry.parseEntry(entry));
                     }
                     ok = 1;
                     if (leaderCommit > node.commitIndex) {
@@ -61,7 +62,8 @@ public class EventAppendEntry implements Event {
                     }
                 }
             }
-            client.write(Constants.RES_APPEND_ENTRY + ";" + node.term + ";" + ok + ";" + node.commitIndex);
+            node.leaderId = cid;
+            client.write(Constants.RES_APPEND_ENTRY + ";" + node.term + ";" + ok + ";" + (node.logger.a.size() - 1));
         });
     }
 }
