@@ -100,6 +100,7 @@ public class DKVSNode {
             return;
         }
         logger = new Logger(id);
+        term = Math.max(1, logger.getLastTerm());
         /*for (int i = 0; i < logger.a.size(); i++) {
             LogEntry b = logger.a.get(i);
             if (b.value.isEmpty()) map.remove(b.key);
