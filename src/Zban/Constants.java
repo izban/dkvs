@@ -16,7 +16,12 @@ public final class Constants {
     public static final String STORED = "STORED";
     public static final String DELETE = "delete";
     public static final String DELETED = "DELETED";
+    public static final String REQUEST_VOTE = "RequestVote";
+    public static final String VOTE_RES = "VoteResult";
 
     public static final int TIMEOUT = DKVSProperties.timeout;
     public static final int TIMEOUT_RECONNECT = 3000;
+
+    public static final int LEADER_TIMEOUT = 100;
+    public static final int ELECTION_TIMEOUT = 10 * LEADER_TIMEOUT;
 }

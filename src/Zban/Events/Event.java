@@ -23,6 +23,12 @@ public interface Event {
         if (s.startsWith(Constants.GET)) {
             return new EventGet(s, client, node);
         }
+        if (s.startsWith(Constants.REQUEST_VOTE)) {
+            return new EventRequestVote(s, client, node);
+        }
+        if (s.startsWith(Constants.VOTE_RES)) {
+            return new EventVoteRes(s, client, node);
+        }
         return null;
     }
 }

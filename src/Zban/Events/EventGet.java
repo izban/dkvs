@@ -23,15 +23,13 @@ public class EventGet implements Event {
         String key = s.substring(Constants.GET.length() + 1);
 
         node.q.offer(() -> {
-            new Thread(() -> {
-                String res;
-                if (node.map.containsKey(key)) {
-                    res = Constants.VALUE + " " + key + " " + node.map.get(key);
-                } else {
-                    res = Constants.NOT_FOUND;
-                }
-                client.write(res);
-            }).start();
+            String res;
+            if (node.map.containsKey(key)) {
+                res = Constants.VALUE + " " + key + " " + node.map.get(key);
+            } else {
+                res = Constants.NOT_FOUND;
+            }
+            client.write(res);
         });
     }
 }

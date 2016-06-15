@@ -11,7 +11,8 @@ import java.util.Scanner;
  */
 public class DKVSProperties {
     static public Map<Integer, Integer> ports = new HashMap<>();
-    static int timeout;
+    static public int timeout;
+    static public int n;
 
     static {
         try {
@@ -22,9 +23,12 @@ public class DKVSProperties {
                     int id = Integer.parseInt(s.substring(s.indexOf(".") + 1, s.indexOf("=")));
                     int port = Integer.parseInt(s.substring(s.indexOf("=") + 1));
                     ports.put(id, port);
-                }
+                } else
                 if (s.startsWith("timeout")) {
                     timeout = Integer.parseInt(s.substring(s.indexOf("=") + 1));
+                } else
+                if (s.startsWith("n")) {
+                    n = Integer.parseInt(s.substring(s.indexOf("=") + 1));
                 }
             }
         } catch (FileNotFoundException e) {

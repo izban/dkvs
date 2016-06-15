@@ -16,6 +16,8 @@ public class MySocket {
     private PrintWriter out;
     public boolean broken;
     public int cid;
+    ThreadWriter writer;
+    Thread thread;
 
     MySocket(Socket socket) throws IOException {
         this.socket = socket;
@@ -23,11 +25,13 @@ public class MySocket {
         out = new PrintWriter(socket.getOutputStream());
         broken = false;
         cid = -1;
+        writer = new ThreadWriter(out);
+        thread = new Thread(writer);
+        thread.start();
     }
 
     public void write(String s) {
-        out.println(s);
-        out.flush();
+        writer.q.offer(s);
     }
 
     String read() {
@@ -50,12 +54,17 @@ public class MySocket {
             new Thread(future).start();
             return future.get(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            socket = null;
-            in = null;
-            out = null;
-            broken = true;
+            stop();
             System.err.println(e.toString());
             return Constants.FAIL;
         }
+    }
+
+    void stop() {
+        socket = null;
+        in = null;
+        out = null;
+        broken = true;
+        thread.interrupt();
     }
 }
