@@ -36,10 +36,9 @@ public class EventVoteRes implements Event {
             int voted = Integer.parseInt(a[2]);
             if (term > node.term) {
                 node.votes = -n;
-                node.term = term;
+                node.newTerm(term);
             }
             node.votes += voted;
-            System.err.println(node.votes + " " + n);
             if (node.votes * 2 > n) {
                 node.type = NodeType.LEADER;
                 System.err.println("I, server " + node.id + ", became the leader! FTW!");
@@ -47,7 +46,7 @@ public class EventVoteRes implements Event {
                 node.matchIndex = new int[n + 1];
                 for (int i = 1; i <= n; i++) {
                     node.nextIndex[i] = node.logger.a.size();
-                    node.matchIndex[i] = -1;
+                    node.matchIndex[i] = 0;
                 }
                 ScheduledExecutorService service = new ScheduledThreadPoolExecutor(1);
                 service.scheduleAtFixedRate(() -> {

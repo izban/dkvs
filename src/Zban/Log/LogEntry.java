@@ -8,7 +8,7 @@ public class LogEntry {
     public String value;
     public int term;
 
-    LogEntry(String key, String value, int term) {
+    public LogEntry(String key, String value, int term) {
         this.key = key;
         this.value = value;
         this.term = term;

@@ -17,6 +17,7 @@ public class Logger {
             Files.createFile(Paths.get(file));
         }
         BufferedReader in = new BufferedReader(new FileReader(new File(file)));
+        a.add(new LogEntry("", "", 0));
         while (true) {
             String s = in.readLine();
             if (s == null) break;
@@ -25,11 +26,10 @@ public class Logger {
     }
 
     public int getLastTerm() {
-        if (a.isEmpty()) return 0;
         return a.get(a.size() - 1).term;
     }
 
     public int getLastId() {
-        return a.size();
+        return a.size() - 1;
     }
 }

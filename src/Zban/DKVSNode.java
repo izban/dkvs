@@ -1,6 +1,7 @@
 package Zban;
 
 import Zban.Events.Event;
+import Zban.Events.EventAppendEntry;
 import Zban.Log.LogEntry;
 import Zban.Log.Logger;
 
@@ -29,6 +30,7 @@ public class DKVSNode {
     public ConcurrentHashMap<Integer, MySocket> clientSockets = new ConcurrentHashMap<>();
     public ConcurrentHashMap<Integer, Boolean> ponged = new ConcurrentHashMap<>();
     public ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
+    public int lastApplied = 0;
     public LinkedBlockingQueue<Runnable> q = new LinkedBlockingQueue<>();
     public AtomicLong lastLeaderHeartbeat = new AtomicLong(-1);
     public int term = 1;
@@ -72,6 +74,16 @@ public class DKVSNode {
         votes = 0;
     }
 
+    public void updateStateMachine() {
+        if (commitIndex > lastApplied) {
+            while (lastApplied + 1 <= commitIndex) {
+                LogEntry b = logger.a.get(++lastApplied);
+                if (b.value.isEmpty()) map.remove(b.key);
+                else map.put(b.key, b.value);
+            }
+        }
+    }
+
     public void run() throws IOException {
         try {
             socket = new ServerSocket(port);
@@ -81,11 +93,11 @@ public class DKVSNode {
             return;
         }
         logger = new Logger(id);
-        for (int i = 0; i < logger.a.size(); i++) {
+        /*for (int i = 0; i < logger.a.size(); i++) {
             LogEntry b = logger.a.get(i);
             if (b.value.isEmpty()) map.remove(b.key);
             else map.put(b.key, b.value);
-        }
+        }*/
         System.err.println("Server " + id + " at port " + port + " started");
 
         new Thread(() -> {
@@ -178,7 +190,7 @@ public class DKVSNode {
         ScheduledExecutorService service = new ScheduledThreadPoolExecutor(1);
         service.scheduleAtFixedRate(() -> {
             long cur = System.currentTimeMillis();
-            if (cur - lastLeaderHeartbeat.get() > Constants.ELECTION_TIMEOUT) {
+            if (cur - lastLeaderHeartbeat.get() > Constants.ELECTION_TIMEOUT && type != LEADER) {
                 q.offer(() -> {
                     System.err.println("Starting new electory, new term is " + (term + 1));
                     newTerm(term + 1);
@@ -201,7 +213,7 @@ public class DKVSNode {
             } catch (InterruptedException e) {
                 return;
             }
-            new Thread(o).run();
+            o.run();
         }
     }
 
@@ -209,9 +221,39 @@ public class DKVSNode {
         if (type != LEADER) {
             throw new AssertionError();
         }
+        System.err.println("Starting hearbeat");
         for (int cid = 1; cid <= n; cid++) if (cid != id) {
-            if (clientSockets.containsKey(cid)) {
+            sendMessage(cid, true);
+        }
+    }
 
+    public String makeMessage(int cid) {
+        String entry = nextIndex[cid] == logger.a.size() ? "null" : logger.a.get(nextIndex[cid]).toString();
+        String msg = EventAppendEntry.makeEvent(term, id, nextIndex[cid] - 1, logger.a.get(nextIndex[cid] - 1).term,
+                (nextIndex[cid] < logger.a.size() ? logger.a.get(nextIndex[cid]) : null), commitIndex);
+        return msg;
+    }
+
+    public void sendMessage(int cid, boolean needEmpty) {
+        if (clientSockets.containsKey(cid)) {
+            if (nextIndex[cid] == logger.a.size() && !needEmpty) return;
+            String msg = makeMessage(cid);
+            clientSockets.get(cid).write(msg);
+        }
+    }
+
+    public void updateCommmitIndex() {
+        for (int i = logger.a.size() - 1; i > commitIndex; i--) {
+            int cnt = 1;
+            for (int j = 1; j <= n; j++) if (j != id) {
+                if (matchIndex[j] >= i) {
+                    cnt++;
+                }
+            }
+            if (cnt * 2 > n) {
+                commitIndex = i;
+                updateStateMachine();
+                break;
             }
         }
     }

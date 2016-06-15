@@ -29,6 +29,12 @@ public interface Event {
         if (s.startsWith(Constants.VOTE_RES)) {
             return new EventVoteRes(s, client, node);
         }
+        if (s.startsWith(Constants.APPEND_ENTRY)) {
+            return new EventAppendEntry(s, client, node);
+        }
+        if (s.startsWith(Constants.RES_APPEND_ENTRY)) {
+            return new EventResAppendEntry(s, client, node);
+        }
         return null;
     }
 }
